@@ -350,7 +350,7 @@ func (d *DataChannel) Send(data []byte) error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Printf("HELLOOOOOOO")
 	_, err = d.dataChannel.WriteDataChannel(data, false)
 	return err
 }

@@ -93,6 +93,7 @@ func (d *DataChannel) Send(data []byte) (err error) {
 	}()
 	array := js.Global().Get("Uint8Array").New(len(data))
 	js.CopyBytesToJS(array, data)
+	fmt.Printf("HELLOOOOOOO")
 	d.underlying.Call("send", array)
 	return nil
 }
