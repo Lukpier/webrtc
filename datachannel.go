@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -344,6 +345,7 @@ func (d *DataChannel) readLoop() {
 
 // Send sends the binary message to the DataChannel peer
 func (d *DataChannel) Send(data []byte) error {
+	fmt.Printf("HEELLLLOOOOOOOOO!")
 	err := d.ensureOpen()
 	if err != nil {
 		return err

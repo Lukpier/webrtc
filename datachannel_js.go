@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package webrtc
@@ -84,6 +85,7 @@ func (d *DataChannel) OnMessage(f func(msg DataChannelMessage)) {
 
 // Send sends the binary message to the DataChannel peer
 func (d *DataChannel) Send(data []byte) (err error) {
+	fmt.Printf("HELLOOOOOOO")
 	defer func() {
 		if e := recover(); e != nil {
 			err = recoveryToError(e)
