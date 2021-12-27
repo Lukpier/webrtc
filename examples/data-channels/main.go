@@ -21,8 +21,6 @@ func main() {
 		},
 	}
 
-	var c webrtc
-
 	// Create a new RTCPeerConnection
 	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
