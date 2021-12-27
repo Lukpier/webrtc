@@ -57,8 +57,9 @@ type DataChannel struct {
 	dataChannel   *datachannel.DataChannel
 
 	// A reference to the associated api object used by this datachannel
-	api *API
-	log logging.LeveledLogger
+	api   *API
+	log   logging.LeveledLogger
+	count *count32
 }
 
 // NewDataChannel creates a new DataChannel.
@@ -97,6 +98,7 @@ func (api *API) newDataChannel(params *DataChannelParameters, log logging.Levele
 		maxRetransmits:    params.MaxRetransmits,
 		api:               api,
 		log:               log,
+		count:             &count32{},
 	}
 
 	d.setReadyState(DataChannelStateConnecting)
@@ -266,6 +268,8 @@ func (d *DataChannel) onMessage(msg DataChannelMessage) {
 	if handler == nil {
 		return
 	}
+	d.count.inc()
+	fmt.Println("I'm Receiving message ", d.count.get())
 	handler(msg)
 }
 
@@ -350,7 +354,6 @@ func (d *DataChannel) Send(data []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("HELLOOOOOOO")
 	_, err = d.dataChannel.WriteDataChannel(data, false)
 	return err
 }
@@ -361,7 +364,8 @@ func (d *DataChannel) SendText(s string) error {
 	if err != nil {
 		return err
 	}
-
+	d.count.inc()
+	fmt.Println("I'm Sending message ", d.count.get())
 	_, err = d.dataChannel.WriteDataChannel([]byte(s), true)
 	return err
 }
