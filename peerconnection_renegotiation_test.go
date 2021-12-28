@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -92,7 +93,7 @@ func TestPeerConnection_Renegotiation_AddRecvonlyTransceiver(t *testing.T) {
 			report := test.CheckRoutines(t)
 			defer report()
 
-			pcOffer, pcAnswer, err := newPair()
+			pcOffer, pcAnswer, err := newPair(false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -154,7 +155,7 @@ func TestPeerConnection_Renegotiation_AddTrack(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +237,7 @@ func TestPeerConnection_Renegotiation_AddTrack_Multiple(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,7 +276,7 @@ func TestPeerConnection_Renegotiation_AddTrack_Rename(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -505,7 +506,7 @@ func TestPeerConnection_Renegotiation_RemoveTrack(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -550,7 +551,7 @@ func TestPeerConnection_RoleSwitch(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcFirstOfferer, pcSecondOfferer, err := newPair()
+	pcFirstOfferer, pcSecondOfferer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -656,7 +657,7 @@ func TestPeerConnection_Renegotiation_SetLocalDescription(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -732,7 +733,7 @@ func TestPeerConnection_Renegotiation_NoApplication(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -927,7 +928,7 @@ func TestNegotiationNeededStressOneSided(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcA, pcB, err := newPair()
+	pcA, pcB, err := newPair(false)
 	assert.NoError(t, err)
 
 	const expectedTrackCount = 500
@@ -961,7 +962,7 @@ func TestPeerConnection_Renegotiation_DisableTrack(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 
 	// Create two transceivers

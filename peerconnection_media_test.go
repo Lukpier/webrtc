@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -49,7 +50,7 @@ func TestPeerConnection_Media_Sample(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +210,7 @@ func TestPeerConnection_Media_Shutdown(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -416,7 +417,7 @@ func TestUndeclaredSSRC(t *testing.T) {
 	defer report()
 
 	t.Run("No SSRC", func(t *testing.T) {
-		pcOffer, pcAnswer, err := newPair()
+		pcOffer, pcAnswer, err := newPair(false)
 		assert.NoError(t, err)
 
 		vp8Writer, err := NewTrackLocalStaticSample(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion2")
@@ -907,7 +908,7 @@ func TestPeerConnection_Start_Right_Receiver(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	require.NoError(t, err)
 
 	_, err = pcAnswer.AddTransceiverFromKind(RTPCodecTypeVideo, RTPTransceiverInit{Direction: RTPTransceiverDirectionRecvonly})
@@ -978,7 +979,7 @@ func TestPeerConnection_Simulcast_Probe(t *testing.T) {
 	track, err := NewTrackLocalStaticRTP(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion")
 	assert.NoError(t, err)
 
-	offerer, answerer, err := newPair()
+	offerer, answerer, err := newPair(false)
 	assert.NoError(t, err)
 
 	_, err = offerer.AddTrack(track)

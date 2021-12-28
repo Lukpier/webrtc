@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -18,7 +19,7 @@ func TestICETransport_OnSelectedCandidatePairChange(t *testing.T) {
 	lim := test.TimeOut(time.Second * 30)
 	defer lim.Stop()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 
 	iceComplete := make(chan bool)
@@ -45,7 +46,7 @@ func TestICETransport_OnSelectedCandidatePairChange(t *testing.T) {
 }
 
 func TestICETransport_GetSelectedCandidatePair(t *testing.T) {
-	offerer, answerer, err := newPair()
+	offerer, answerer, err := newPair(false)
 	assert.NoError(t, err)
 
 	peerConnectionConnected := untilConnectionState(PeerConnectionStateConnected, offerer, answerer)

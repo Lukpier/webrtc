@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -121,7 +122,7 @@ func Test_RTPSender_GetParameters(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	offerer, answerer, err := newPair()
+	offerer, answerer, err := newPair(false)
 	assert.NoError(t, err)
 
 	rtpTransceiver, err := offerer.AddTransceiverFromKind(RTPCodecTypeVideo)
@@ -173,7 +174,7 @@ func Test_RTPSender_ReplaceTrack_InvalidTrackKindChange(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	sender, receiver, err := newPair()
+	sender, receiver, err := newPair(false)
 	assert.NoError(t, err)
 
 	trackA, err := NewTrackLocalStaticSample(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion")
@@ -215,7 +216,7 @@ func Test_RTPSender_ReplaceTrack_InvalidCodecChange(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	sender, receiver, err := newPair()
+	sender, receiver, err := newPair(false)
 	assert.NoError(t, err)
 
 	trackA, err := NewTrackLocalStaticSample(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion")

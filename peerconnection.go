@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -15,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/ice/v2"
 	"github.com/pion/interceptor"
 	"github.com/pion/logging"
@@ -82,6 +84,7 @@ type PeerConnection struct {
 	log logging.LeveledLogger
 
 	interceptorRTCPWriter interceptor.RTCPWriter
+	count                 *gocounter.Counter64
 }
 
 // NewPeerConnection creates a PeerConnection with the default codecs and
@@ -119,6 +122,8 @@ func (api *API) NewPeerConnection(configuration Configuration) (*PeerConnection,
 			RTCPMuxPolicy:        RTCPMuxPolicyRequire,
 			Certificates:         []Certificate{},
 			ICECandidatePoolSize: 0,
+			PacketDumpEnabled:    false,
+			PacketOutputDir:      "",
 		},
 		ops:                    newOperations(),
 		isClosed:               &atomicBool{},
@@ -129,9 +134,11 @@ func (api *API) NewPeerConnection(configuration Configuration) (*PeerConnection,
 		greaterMid:             -1,
 		signalingState:         SignalingStateStable,
 
-		api: api,
-		log: api.settingEngine.LoggerFactory.NewLogger("pc"),
+		api:   api,
+		log:   api.settingEngine.LoggerFactory.NewLogger("pc"),
+		count: &gocounter.Counter64{},
 	}
+
 	pc.iceConnectionState.Store(ICEConnectionStateNew)
 	pc.connectionState.Store(PeerConnectionStateNew)
 
@@ -165,7 +172,7 @@ func (api *API) NewPeerConnection(configuration Configuration) (*PeerConnection,
 	pc.iceTransport = iceTransport
 
 	// Create the DTLS transport
-	dtlsTransport, err := pc.api.NewDTLSTransport(pc.iceTransport, pc.configuration.Certificates)
+	dtlsTransport, err := pc.api.NewDTLSTransport(pc.iceTransport, pc.configuration.Certificates, pc.configuration.PacketDumpEnabled, pc.configuration.PacketOutputDir, pc.count)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +246,9 @@ func (pc *PeerConnection) initConfiguration(configuration Configuration) error {
 	if configuration.SDPSemantics != SDPSemantics(Unknown) {
 		pc.configuration.SDPSemantics = configuration.SDPSemantics
 	}
+
+	pc.configuration.PacketDumpEnabled = configuration.PacketDumpEnabled
+	pc.configuration.PacketOutputDir = configuration.PacketOutputDir
 
 	sanitizedICEServers := configuration.getICEServers()
 	if len(sanitizedICEServers) > 0 {
@@ -1763,10 +1773,11 @@ func (pc *PeerConnection) CreateDataChannel(label string, options *DataChannelIn
 	if pc.isClosed.get() {
 		return nil, &rtcerr.InvalidStateError{Err: ErrConnectionClosed}
 	}
-
 	params := &DataChannelParameters{
-		Label:   label,
-		Ordered: true,
+		Label:             label,
+		Ordered:           true,
+		PacketDumpEnabled: pc.configuration.PacketDumpEnabled,
+		PacketOutputDir:   pc.configuration.PacketOutputDir,
 	}
 
 	// https://w3c.github.io/webrtc-pc/#peer-to-peer-data-api (Step #19)
@@ -1806,9 +1817,10 @@ func (pc *PeerConnection) CreateDataChannel(label string, options *DataChannelIn
 		if options.Negotiated != nil {
 			params.Negotiated = *options.Negotiated
 		}
+
 	}
 
-	d, err := pc.api.newDataChannel(params, pc.log)
+	d, err := pc.api.newDataChannel(params, pc.log, pc.count)
 	if err != nil {
 		return nil, err
 	}

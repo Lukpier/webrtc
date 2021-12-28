@@ -2,7 +2,10 @@ module github.com/pion/webrtc/v3
 
 go 1.13
 
+replace github.com/pion/srtp/v2 v2.0.5 => github.com/Lukpier/srtp/v2 v2.0.6
+
 require (
+	github.com/Lukpier/gocounter v1.0.0
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.17.0 // indirect
 	github.com/pion/datachannel v1.5.2

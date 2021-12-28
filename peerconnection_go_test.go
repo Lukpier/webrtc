@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -417,7 +418,7 @@ func TestPeerConnection_AnswerWithClosedConnection(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	offerPeerConn, answerPeerConn, err := newPair()
+	offerPeerConn, answerPeerConn, err := newPair(false)
 	assert.NoError(t, err)
 
 	inChecking, inCheckingCancel := context.WithCancel(context.Background())
@@ -700,7 +701,7 @@ func TestOnICEGatheringStateChange(t *testing.T) {
 
 // Assert Trickle ICE behaviors
 func TestPeerConnectionTrickle(t *testing.T) {
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	assert.NoError(t, err)
 
 	_, err = offerPC.CreateDataChannel("test-channel", nil)
@@ -875,7 +876,7 @@ func TestICERestart(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	assert.NoError(t, err)
 
 	var connectedWaitGroup sync.WaitGroup
@@ -1324,7 +1325,7 @@ func TestPeerConnection_TransceiverDirection(t *testing.T) {
 		answerFinalDirections := test.answerFinalDirections
 
 		t.Run(test.name, func(t *testing.T) {
-			pcOffer, pcAnswer, err := newPair()
+			pcOffer, pcAnswer, err := newPair(false)
 			assert.NoError(t, err)
 
 			err = createTransceiver(pcOffer, offerDirection)
@@ -1354,7 +1355,7 @@ func TestPeerConnection_SessionID(t *testing.T) {
 	defer test.TimeOut(time.Second * 10).Stop()
 	defer test.CheckRoutines(t)()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 	var offerSessionID uint64
 	var offerSessionVersion uint64

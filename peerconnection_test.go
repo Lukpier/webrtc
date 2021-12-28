@@ -14,8 +14,15 @@ import (
 
 // newPair creates two new peer connections (an offerer and an answerer)
 // *without* using an api (i.e. using the default settings).
-func newPair() (pcOffer *PeerConnection, pcAnswer *PeerConnection, err error) {
-	pca, err := NewPeerConnection(Configuration{})
+func newPair(packetDumpEnabled bool) (pcOffer *PeerConnection, pcAnswer *PeerConnection, err error) {
+
+	config := &Configuration{}
+	if packetDumpEnabled {
+		config.PacketDumpEnabled = packetDumpEnabled
+		config.PacketOutputDir = "/tmp"
+	}
+
+	pca, err := NewPeerConnection(*config)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -1,8 +1,10 @@
+//go:build !js
 // +build !js
 
 package webrtc
 
 import (
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/webrtc/v3/internal/util"
 )
 
@@ -133,7 +135,7 @@ func newORTCStack() (*testORTCStack, error) {
 	ice := api.NewICETransport(gatherer)
 
 	// Construct the DTLS transport
-	dtls, err := api.NewDTLSTransport(ice, nil)
+	dtls, err := api.NewDTLSTransport(ice, nil, false, "", &gocounter.Counter64{})
 	if err != nil {
 		return nil, err
 	}

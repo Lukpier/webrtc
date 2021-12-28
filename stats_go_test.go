@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -200,7 +201,7 @@ func signalPairForStats(pcOffer *PeerConnection, pcAnswer *PeerConnection) error
 }
 
 func TestPeerConnection_GetStats(t *testing.T) {
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	assert.NoError(t, err)
 
 	track1, err := NewTrackLocalStaticSample(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion1")

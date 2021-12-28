@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package main
@@ -61,6 +62,8 @@ func main() {
 				URLs: []string{"stun:stun.l.google.com:19302"},
 			},
 		},
+		PacketDumpEnabled: true,
+		PacketOutputDir:   "/tmp",
 	}
 
 	// Create a new RTCPeerConnection

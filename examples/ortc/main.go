@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package main
@@ -7,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/webrtc/v3"
 	"github.com/pion/webrtc/v3/examples/internal/signal"
 )
@@ -37,7 +39,7 @@ func main() {
 	ice := api.NewICETransport(gatherer)
 
 	// Construct the DTLS transport
-	dtls, err := api.NewDTLSTransport(ice, nil)
+	dtls, err := api.NewDTLSTransport(ice, nil, false, "", &gocounter.Counter64{})
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +139,7 @@ func main() {
 			ID:    &id,
 		}
 		var channel *webrtc.DataChannel
-		channel, err = api.NewDataChannel(sctp, dcParams)
+		channel, err = api.NewDataChannel(sctp, dcParams, &gocounter.Counter64{})
 		if err != nil {
 			panic(err)
 		}

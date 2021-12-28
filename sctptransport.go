@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -8,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/datachannel"
 	"github.com/pion/logging"
 	"github.com/pion/sctp"
@@ -221,7 +223,7 @@ ACCEPT:
 			Ordered:           ordered,
 			MaxPacketLifeTime: maxPacketLifeTime,
 			MaxRetransmits:    maxRetransmits,
-		}, r.api.settingEngine.LoggerFactory.NewLogger("ortc"))
+		}, r.api.settingEngine.LoggerFactory.NewLogger("ortc"), &gocounter.Counter64{})
 		if err != nil {
 			r.log.Errorf("Failed to accept data channel: %v", err)
 			r.onError(err)

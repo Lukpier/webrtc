@@ -8,10 +8,12 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/datachannel"
 	"github.com/pion/logging"
 	"github.com/pion/webrtc/v3/pkg/rtcerr"
@@ -57,16 +59,18 @@ type DataChannel struct {
 	dataChannel   *datachannel.DataChannel
 
 	// A reference to the associated api object used by this datachannel
-	api   *API
-	log   logging.LeveledLogger
-	count *count32
+	api               *API
+	log               logging.LeveledLogger
+	packetDumpEnabled bool
+	packetOutputDir   string
+	count             *gocounter.Counter64
 }
 
 // NewDataChannel creates a new DataChannel.
 // This constructor is part of the ORTC API. It is not
 // meant to be used together with the basic WebRTC API.
-func (api *API) NewDataChannel(transport *SCTPTransport, params *DataChannelParameters) (*DataChannel, error) {
-	d, err := api.newDataChannel(params, api.settingEngine.LoggerFactory.NewLogger("ortc"))
+func (api *API) NewDataChannel(transport *SCTPTransport, params *DataChannelParameters, count *gocounter.Counter64) (*DataChannel, error) {
+	d, err := api.newDataChannel(params, api.settingEngine.LoggerFactory.NewLogger("ortc"), count)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +85,11 @@ func (api *API) NewDataChannel(transport *SCTPTransport, params *DataChannelPara
 
 // newDataChannel is an internal constructor for the data channel used to
 // create the DataChannel object before the networking is set up.
-func (api *API) newDataChannel(params *DataChannelParameters, log logging.LeveledLogger) (*DataChannel, error) {
+func (api *API) newDataChannel(params *DataChannelParameters, log logging.LeveledLogger, count *gocounter.Counter64) (*DataChannel, error) {
 	// https://w3c.github.io/webrtc-pc/#peer-to-peer-data-api (Step #5)
 	if len(params.Label) > 65535 {
 		return nil, &rtcerr.TypeError{Err: ErrStringSizeLimit}
 	}
-
 	d := &DataChannel{
 		statsID:           fmt.Sprintf("DataChannel-%d", time.Now().UnixNano()),
 		label:             params.Label,
@@ -98,7 +101,9 @@ func (api *API) newDataChannel(params *DataChannelParameters, log logging.Levele
 		maxRetransmits:    params.MaxRetransmits,
 		api:               api,
 		log:               log,
-		count:             &count32{},
+		packetDumpEnabled: params.PacketDumpEnabled,
+		packetOutputDir:   params.PacketOutputDir,
+		count:             count,
 	}
 
 	d.setReadyState(DataChannelStateConnecting)
@@ -264,13 +269,20 @@ func (d *DataChannel) onMessage(msg DataChannelMessage) {
 	d.mu.RLock()
 	handler := d.onMessageHandler
 	d.mu.RUnlock()
-
+	d.WriteDataChannelMessageToFile(msg.Data, "in", "decrypted")
 	if handler == nil {
 		return
 	}
-	d.count.inc()
-	fmt.Println("I'm Receiving message ", d.count.get())
 	handler(msg)
+}
+
+func (d *DataChannel) WriteDataChannelMessageToFile(payload []byte, direction string, format string) error {
+	if d.packetDumpEnabled {
+		d.count.Inc()
+		err := os.WriteFile(fmt.Sprintf("%s/%06d_%s_%s.txt", d.packetOutputDir, d.count.Get(), direction, format), payload, 0700)
+		return err
+	}
+	return nil
 }
 
 func (d *DataChannel) handleOpen(dc *datachannel.DataChannel, isRemote, isAlreadyNegotiated bool) {
@@ -354,6 +366,7 @@ func (d *DataChannel) Send(data []byte) error {
 	if err != nil {
 		return err
 	}
+	d.WriteDataChannelMessageToFile(data, "out", "decrypted")
 	_, err = d.dataChannel.WriteDataChannel(data, false)
 	return err
 }
@@ -364,8 +377,7 @@ func (d *DataChannel) SendText(s string) error {
 	if err != nil {
 		return err
 	}
-	d.count.inc()
-	fmt.Println("I'm Sending message ", d.count.get())
+	d.WriteDataChannelMessageToFile([]byte(s), "out", "decrypted")
 	_, err = d.dataChannel.WriteDataChannel([]byte(s), true)
 	return err
 }

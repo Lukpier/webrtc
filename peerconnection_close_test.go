@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -18,7 +19,7 @@ func TestPeerConnection_Close(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +67,7 @@ func TestPeerConnection_Close_PreICE(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +114,7 @@ func TestPeerConnection_Close_DuringICE(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	if err != nil {
 		t.Fatal(err)
 	}

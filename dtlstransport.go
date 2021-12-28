@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -15,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/dtls/v2"
 	"github.com/pion/dtls/v2/pkg/crypto/fingerprint"
 	"github.com/pion/interceptor"
@@ -51,21 +53,27 @@ type DTLSTransport struct {
 
 	dtlsMatcher mux.MatchFunc
 
-	api *API
-	log logging.LeveledLogger
+	api               *API
+	log               logging.LeveledLogger
+	packetDumpEnabled bool
+	packetOutputDir   string
+	count             *gocounter.Counter64
 }
 
 // NewDTLSTransport creates a new DTLSTransport.
 // This constructor is part of the ORTC API. It is not
 // meant to be used together with the basic WebRTC API.
-func (api *API) NewDTLSTransport(transport *ICETransport, certificates []Certificate) (*DTLSTransport, error) {
+func (api *API) NewDTLSTransport(transport *ICETransport, certificates []Certificate, packetDumpEnabled bool, packetOutputDir string, count *gocounter.Counter64) (*DTLSTransport, error) {
 	t := &DTLSTransport{
-		iceTransport: transport,
-		api:          api,
-		state:        DTLSTransportStateNew,
-		dtlsMatcher:  mux.MatchDTLS,
-		srtpReady:    make(chan struct{}),
-		log:          api.settingEngine.LoggerFactory.NewLogger("DTLSTransport"),
+		iceTransport:      transport,
+		api:               api,
+		state:             DTLSTransportStateNew,
+		dtlsMatcher:       mux.MatchDTLS,
+		srtpReady:         make(chan struct{}),
+		log:               api.settingEngine.LoggerFactory.NewLogger("DTLSTransport"),
+		count:             count,
+		packetDumpEnabled: packetDumpEnabled,
+		packetOutputDir:   packetOutputDir,
 	}
 
 	if len(certificates) > 0 {
@@ -176,9 +184,12 @@ func (t *DTLSTransport) GetRemoteCertificate() []byte {
 
 func (t *DTLSTransport) startSRTP() error {
 	srtpConfig := &srtp.Config{
-		Profile:       t.srtpProtectionProfile,
-		BufferFactory: t.api.settingEngine.BufferFactory,
-		LoggerFactory: t.api.settingEngine.LoggerFactory,
+		Profile:           t.srtpProtectionProfile,
+		BufferFactory:     t.api.settingEngine.BufferFactory,
+		LoggerFactory:     t.api.settingEngine.LoggerFactory,
+		PacketDumpEnabled: t.packetDumpEnabled,
+		PacketOutputDir:   t.packetOutputDir,
+		Count:             t.count,
 	}
 	if t.api.settingEngine.replayProtection.SRTP != nil {
 		srtpConfig.RemoteOptions = append(

@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -177,7 +178,7 @@ func TestDataChannelBufferedAmount(t *testing.T) {
 		var nCbs int
 		buf := make([]byte, 1000)
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -251,7 +252,7 @@ func TestDataChannelBufferedAmount(t *testing.T) {
 		var nCbs int
 		buf := make([]byte, 1000)
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -531,7 +532,7 @@ func TestDataChannel_NonStandardSessionDescription(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	assert.NoError(t, err)
 
 	_, err = offerPC.CreateDataChannel("foo", nil)

@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -65,7 +66,7 @@ func Test_TrackLocalStatic_NoCodecIntersection(t *testing.T) {
 	})
 
 	t.Run("Local", func(t *testing.T) {
-		offerer, answerer, err := newPair()
+		offerer, answerer, err := newPair(false)
 		assert.NoError(t, err)
 
 		invalidCodecTrack, err := NewTrackLocalStaticSample(RTPCodecCapability{MimeType: "video/invalid-codec"}, "video", "pion")
@@ -87,7 +88,7 @@ func Test_TrackLocalStatic_Closed(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 
 	_, err = pcAnswer.AddTransceiverFromKind(RTPCodecTypeVideo)
@@ -168,7 +169,7 @@ func Test_TrackLocalStatic_Mutate_Input(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 
 	vp8Writer, err := NewTrackLocalStaticRTP(RTPCodecCapability{MimeType: MimeTypeVP8}, "video", "pion")
@@ -197,7 +198,7 @@ func Test_TrackLocalStatic_Binding_NonBlocking(t *testing.T) {
 	report := test.CheckRoutines(t)
 	defer report()
 
-	pcOffer, pcAnswer, err := newPair()
+	pcOffer, pcAnswer, err := newPair(false)
 	assert.NoError(t, err)
 
 	_, err = pcOffer.AddTransceiverFromKind(RTPCodecTypeVideo)
@@ -225,7 +226,7 @@ func Test_TrackLocalStatic_Binding_NonBlocking(t *testing.T) {
 }
 
 func BenchmarkTrackLocalWrite(b *testing.B) {
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	defer closePairNow(b, offerPC, answerPC)
 	if err != nil {
 		b.Fatalf("Failed to create a PC pair for testing")

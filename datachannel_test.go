@@ -1,14 +1,15 @@
 package webrtc
 
 import (
+	"errors"
 	"fmt"
+	"github.com/pion/transport/test"
+	"github.com/stretchr/testify/assert"
 	"io"
+	"os"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/pion/transport/test"
-	"github.com/stretchr/testify/assert"
 )
 
 // expectedLabel represents the label of the data channel we are trying to test.
@@ -41,7 +42,7 @@ func closePair(t *testing.T, pc1, pc2 io.Closer, done <-chan bool) {
 }
 
 func setUpDataChannelParametersTest(t *testing.T, options *DataChannelInit) (*PeerConnection, *PeerConnection, *DataChannel, chan bool) {
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	if err != nil {
 		t.Fatalf("Failed to create a PC pair for testing")
 	}
@@ -72,7 +73,7 @@ func BenchmarkDataChannelSend32(b *testing.B) { benchmarkDataChannelSend(b, 32) 
 
 // See https://github.com/pion/webrtc/issues/1516
 func benchmarkDataChannelSend(b *testing.B, numChannels int) {
-	offerPC, answerPC, err := newPair()
+	offerPC, answerPC, err := newPair(false)
 	if err != nil {
 		b.Fatalf("Failed to create a PC pair for testing")
 	}
@@ -110,6 +111,60 @@ func benchmarkDataChannelSend(b *testing.B, numChannels int) {
 	closePairNow(b, offerPC, answerPC)
 }
 
+func TestDataChannelMessageWriteToFile(t *testing.T) {
+	const openOnceChannelCapacity = 2
+
+	t.Run("should correctly write DataChannelMessage to filesystem", func(t *testing.T) {
+
+		report := test.CheckRoutines(t)
+		defer report()
+
+		offerPC, answerPC, err := newPair(true)
+		if err != nil {
+			t.Fatalf("Failed to create a PC pair for testing")
+		}
+
+		done := make(chan bool)
+		openCalls := make(chan bool, openOnceChannelCapacity)
+
+		answerPC.OnDataChannel(func(d *DataChannel) {
+			if d.Label() != expectedLabel {
+				return
+			}
+			d.OnOpen(func() {
+				openCalls <- true
+			})
+			d.OnMessage(func(msg DataChannelMessage) {
+				go func() {
+					// Wait a little bit to ensure all messages are processed.
+					time.Sleep(100 * time.Millisecond)
+					done <- true
+				}()
+			})
+		})
+
+		dc, err := offerPC.CreateDataChannel(expectedLabel, nil)
+		assert.NoError(t, err)
+
+		dc.OnOpen(func() {
+			e := dc.SendText("Ping")
+			if e != nil {
+				t.Fatalf("Failed to send string on data channel")
+			}
+		})
+
+		assert.NoError(t, signalPair(offerPC, answerPC))
+
+		closePair(t, offerPC, answerPC, done)
+
+		assert.Len(t, openCalls, 1)
+
+		if _, err := os.Stat("/tmp/000001_out_decrypted.txt"); errors.Is(err, os.ErrNotExist) {
+			t.Error(err)
+		}
+	})
+}
+
 func TestDataChannel_Open(t *testing.T) {
 	const openOnceChannelCapacity = 2
 
@@ -117,7 +172,7 @@ func TestDataChannel_Open(t *testing.T) {
 		report := test.CheckRoutines(t)
 		defer report()
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -162,7 +217,7 @@ func TestDataChannel_Open(t *testing.T) {
 		report := test.CheckRoutines(t)
 		defer report()
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -221,7 +276,7 @@ func TestDataChannel_Send(t *testing.T) {
 		report := test.CheckRoutines(t)
 		defer report()
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -272,7 +327,7 @@ func TestDataChannel_Send(t *testing.T) {
 		report := test.CheckRoutines(t)
 		defer report()
 
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		if err != nil {
 			t.Fatalf("Failed to create a PC pair for testing")
 		}
@@ -337,7 +392,7 @@ func TestDataChannel_Close(t *testing.T) {
 	defer report()
 
 	t.Run("Close after PeerConnection Closed", func(t *testing.T) {
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		assert.NoError(t, err)
 
 		dc, err := offerPC.CreateDataChannel(expectedLabel, nil)
@@ -348,7 +403,7 @@ func TestDataChannel_Close(t *testing.T) {
 	})
 
 	t.Run("Close before connected", func(t *testing.T) {
-		offerPC, answerPC, err := newPair()
+		offerPC, answerPC, err := newPair(false)
 		assert.NoError(t, err)
 
 		dc, err := offerPC.CreateDataChannel(expectedLabel, nil)

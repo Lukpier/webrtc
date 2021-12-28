@@ -9,4 +9,6 @@ type DataChannelParameters struct {
 	MaxPacketLifeTime *uint16 `json:"maxPacketLifeTime"`
 	MaxRetransmits    *uint16 `json:"maxRetransmits"`
 	Negotiated        bool    `json:"negotiated"`
+	PacketDumpEnabled bool    `json:"packetDumpEnabled"`
+	PacketOutputDir   string  `json:"packetOutputDir"`
 }

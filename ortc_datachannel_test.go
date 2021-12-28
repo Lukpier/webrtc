@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package webrtc
@@ -7,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/transport/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,7 +45,7 @@ func TestDataChannel_ORTCE2E(t *testing.T) {
 		Label: "Foo",
 		ID:    &id,
 	}
-	channelA, err := stackA.api.NewDataChannel(stackA.sctp, dcParams)
+	channelA, err := stackA.api.NewDataChannel(stackA.sctp, dcParams, &gocounter.Counter64{})
 	assert.NoError(t, err)
 
 	<-awaitSetup
